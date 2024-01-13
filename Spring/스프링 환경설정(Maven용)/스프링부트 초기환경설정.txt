@@ -1,0 +1,52 @@
+* Spring boot에서 web사용하기
+
+
+Spring Boot Web은 jsp 지원하지 않음. 반드시 jstl와 jasper를 추가해야 함.
+WEB을 사용하기 위해 다음 절차를 실행하여 Web개발을 위한 환경을 만들어주어야 한다.
+
+참고자료 : 스프링부트_kb04.ppt 
+ppt 페이지 37쪽부터 참고
+---------------------------------------------------------------
+
+1. 프로젝트 생성을 할 때 종속성 선택 시 Spring Web을 선택
+2. application properties 파일에 다음 아래 코드 넣기
+
+	spring.datasource.driver-class-name=oracle.jdbc.driver.OracleDriver
+	spring.datasource.url=jdbc:oracle:thin:@localhost:1521/XE
+	spring.datasource.username=spring(데이터베이스명)
+	spring.datasource.password=spring(데이터베이스비밀번호)
+	spring.jpa.database-platform=org.hibernate.dialect.OracleDialect
+	spring.jpa.show-sql=true
+	spring.jpa.properties.hibernate.format_sql=true
+
+	spring.mvc.view.prefix=/WEB-INF/jsp/
+	spring.mvc.view.suffix=.jsp
+
+3.pom.xml에 다음 아래 의존성 코드 추가
+
+	<dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>jstl</artifactId>
+	</dependency>
+			
+	<!-- tomcat-embed-jasper -->
+	<dependency>
+		<groupId>org.apache.tomcat.embed</groupId>
+		<artifactId>tomcat-embed-jasper</artifactId>
+	</dependency>
+
+4. src/main/java에 controller클래스 만들기
+5. src/main까지만 만들어져 있기 때문에 이하 webapp/WEB-INF/jsp 까지의 폴더를 만들기
+
+-----------------------------------------------------------------
+
+*Spring Web에서 MyBatis를 사용하기
+
+
+1. pom.xml에 다음 아래 코드을 추가해준다. (주의해야할 점은 앞서 oracle.database.jdbc를 DI해주었으면 아래와 같이 mybatis만 DI 해준다.
+
+	<dependency>
+		<groupId>org.mybatis.spring.boot</groupId>
+		<artifactId>mybatis-spring-boot-starter</artifactId>
+		<version>2.3.0</version>
+	</dependency>

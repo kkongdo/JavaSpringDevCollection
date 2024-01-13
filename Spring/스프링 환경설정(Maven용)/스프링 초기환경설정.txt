@@ -1,0 +1,104 @@
+* Mapper 인터페이스
+
+매퍼 xml과 SqlSession을 합친 형태
+Dao를 대체할 수 있어 간편하다.
+@Mapper, @Select, @Insert, @Update, @Delete
+
+root-context.xml
+<bean class ="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	<propert name = "basePackage" value = "board.mapper"/>
+</bean>
+
+package board.mapper;
+
+@Mapper
+public interface BoardMapper{
+	@Select("select * from board order by no desc")
+	public List<BoardDto> list();
+	@Select("select * from board where no = #{no}")
+	public BoardDto findByNo(int no);
+	
+}
+------------------------------------------------------------------
+1. 프로젝트 환경설정
+Sprig Legacy Project 클릭 - >Spring MVC Project 클릭 -> 이름과 패키지명 입력후 만듬 -> pom.xml에 java-version 1.8로 변경한다. spring 5.3.29로 변경한다.
+-> spring-jdbc:5.3.29, ojdbc98:23.2.0.0 , mybatis:3.x, mybatis-spring1.3.3을 추가(밑에 나오는 다음 코드들을 넣어준다)
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-JDBC</artifactId>
+			<version>${org.springframework-version}</version>
+		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/com.oracle.database.jdbc/ojdbc8 -->
+		<dependency>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc8</artifactId>
+			<version>23.2.0.0</version>
+		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/org.mybatis/mybatis -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>3.5.13</version>
+		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/org.mybatis/mybatis-spring -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis-spring</artifactId>
+			<version>1.3.3</version>
+		</dependency>
+------------------------------------------------------------------
+
+root-context.xml에 JndiObjectFactoryBean 정의(DataSource을 의미한다.), sqlSessoinTemplate을 정의, SqlSessionFactoryBean(SqlSession을 의미한다)을 정의한다. 즉 해당 세개의 빈 코드를 넣어준다.
+(밑에 나오는 다음 코드들을 넣어준다)
+
+	<bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+  		<property name="jndiName" value="java:comp/env/jdbc/ora" /> <!-- context.xml에 있는 Resource태그 안에 name이랑 jdbc/ora랑 이름이 맞아야한다. -->
+	</bean>
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="mapperLocations" value="classpath:/mybatis/**/*.xml" /> 
+		<!--/mybatis/*/*.xml 의 의미는 자식폴더에 존재하는 모든 폴더의 파일들을 읽어들이겠다(자손폴더X), /mybatis/**/*.xml의 의미는 자식, 자손폴더까지 존재하는 모든 폴더의 파일들을 읽어들이겠다는 의미 -->
+	</bean>
+	<bean id="sqlSessoinTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	
+------------------------------------------------------------------
+root-context.xml파일에 넣어주는 것 중에
+<property name="mapperLocations" value="classpath:/mybatis/**/*.xml" /> 
+<!--/mybatis/*/*.xml 의 의미는 자식폴더에 존재하는 모든 폴더의 파일들을 읽어들이겠다(자손폴더X). /mybatis/**/*.xml의 의미는 자식, 자손폴더까지 존재하는 모든 폴더의 파일들을 읽어들이겠다는 의미 -->
+
+------------------------------------------------------------------
+
+mapper인터페이스를 사용하기 위하여 
+
+src/main/java에 인터페이스 패키지를 만들어주고 그 안에 해당 밑에 나오는 인터페이스를 넣어준다.
+@Mapper
+public interface BoardMapper {
+	@Select("select count(*) from board")
+	public int count(); // 해당 SQL문을 사용할 경우 count()실행되면서 int로 반환된다.
+	
+}
+
+root-context.xml에 다음 코드를 넣어준다. 
+
+<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+    <property name="basePackage" value="board.mapper" /> <!--value값은 src/main/java폴더 밑에 인터페이스가 들어가 있는 패키지명을 의미한다.-->
+</bean>
+
+그 후 Controller에서 사용한다. Controller자바 안에 인터페이스 선언하여 사용한다.
+->예시로 밑에 코드르 보면된다. 
+@Autowired
+	private BoardMapper mapper;
+
+@GetMapping("/board_count")
+	public String board_count() {
+		int count = mapper.count();
+		System.out.println(count);
+		
+		return "board_count";
+	}
+
